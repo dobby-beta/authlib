@@ -395,9 +395,9 @@ class OAuth2Client:
         if refresh_token and url:
             self.refresh_token(url, refresh_token=refresh_token)
             return True
-        elif self.metadata.get("grant_type") == "client_credentials":
+        elif self._can_fetch_new_token():
             access_token = token["access_token"]
-            new_token = self.fetch_token(url, grant_type="client_credentials")
+            new_token = self.fetch_token(url, grant_type=self.metadata["grant_type"])
             if self.update_token:
                 self.update_token(new_token, access_token=access_token)
             return True
@@ -571,6 +571,16 @@ class OAuth2Client:
 
         session_kwargs = self._extract_session_request_params(kwargs)
         return self._http_post(url, body, auth=auth, headers=headers, **session_kwargs)
+
+    def _can_fetch_new_token(self):
+        """Whether an expired token without a refresh token can be fetched
+        again without the user: ``client_credentials``, or ``password`` when
+        the credentials are in ``access_token_params``."""
+        grant_type = self.metadata.get("grant_type")
+        if grant_type == "password":
+            params = self.access_token_params
+            return bool(params.get("username") and params.get("password"))
+        return grant_type == "client_credentials"
 
     def _prepare_token_endpoint_body(self, body, grant_type, **kwargs):
         if grant_type == "authorization_code":
