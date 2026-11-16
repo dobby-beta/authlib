@@ -401,7 +401,7 @@ refresh token. Pass the credentials with ``access_token_params``:
     >>> session = OAuth2Session(
     ...     client_id, client_secret, token=token,
     ...     token_endpoint=token_endpoint, grant_type="password",
-    ...     access_token_params={"username": username, "password": password},
+    ...     access_token_params={"username": "alice", "password": "secret"},
     ... )
 
 With the framework integrations, put ``grant_type`` in ``client_kwargs``. The
