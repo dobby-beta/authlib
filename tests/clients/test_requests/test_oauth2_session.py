@@ -577,6 +577,34 @@ def test_auto_refresh_token_sends_access_token_params(token):
     assert "audience=api" in bodies[0]
 
 
+def test_auto_fetch_token_with_password_grant(token):
+    """An expired password-grant token without refresh token is fetched again."""
+    bodies = []
+    sess = OAuth2Session(
+        "foo",
+        token=dict(access_token="a", token_type="bearer", expires_at=100),
+        token_endpoint="https://provider.test/token",
+        grant_type="password",
+        access_token_params={"username": "u", "password": "p"},
+    )
+    sess.send = _recording_send(bodies, token)
+    sess.get("https://resource.test/user")
+    assert "grant_type=password" in bodies[0]
+    assert "username=u" in bodies[0]
+    assert sess.token["access_token"] == token["access_token"]
+
+
+def test_password_grant_without_credentials_is_not_fetched_again():
+    sess = OAuth2Session(
+        "foo",
+        token=dict(access_token="a", token_type="bearer", expires_at=100),
+        token_endpoint="https://provider.test/token",
+        grant_type="password",
+    )
+    with pytest.raises(OAuthError):
+        sess.get("https://resource.test/user")
+
+
 def test_initial_token_fetch_sends_access_token_params(token):
     """The first automatic token fetch is requested with access_token_params."""
     bodies = []

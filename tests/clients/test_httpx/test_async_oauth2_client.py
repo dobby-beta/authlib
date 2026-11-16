@@ -376,6 +376,22 @@ async def test_auto_refresh_token2():
 
 
 @pytest.mark.asyncio
+async def test_auto_fetch_token_with_password_grant():
+    transport = ASGITransport(AsyncMockDispatch(default_token))
+
+    async with AsyncOAuth2Client(
+        "foo",
+        token=dict(access_token="a", token_type="bearer", expires_at=100),
+        token_endpoint="https://provider.test/token",
+        grant_type="password",
+        access_token_params={"username": "u", "password": "p"},
+        transport=transport,
+    ) as client:
+        await client.get("https://resource.test/user")
+        assert client.token["access_token"] == default_token["access_token"]
+
+
+@pytest.mark.asyncio
 async def test_auto_refresh_token_after_explicit_client_credentials():
     transport = ASGITransport(AsyncMockDispatch(default_token))
 

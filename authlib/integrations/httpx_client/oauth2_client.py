@@ -157,11 +157,13 @@ class AsyncOAuth2Client(_OAuth2Client, httpx2.AsyncClient):
                 await self.refresh_token(url, refresh_token=refresh_token)
                 return True
 
-            if self.metadata.get("grant_type") != "client_credentials":
+            if not self._can_fetch_new_token():
                 raise InvalidTokenError()
 
             access_token = token["access_token"]
-            new_token = await self.fetch_token(url, grant_type="client_credentials")
+            new_token = await self.fetch_token(
+                url, grant_type=self.metadata["grant_type"]
+            )
             if self.update_token:
                 await self.update_token(new_token, access_token=access_token)
 
